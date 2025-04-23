@@ -1,0 +1,1 @@
+EXTENSION_NAME = "sagemaker_llm_python"

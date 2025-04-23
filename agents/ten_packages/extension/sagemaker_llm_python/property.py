@@ -1,0 +1,42 @@
+# Property constants
+PROPERTY_REGION = "region"
+PROPERTY_ACCESS_KEY = "access_key"
+PROPERTY_SECRET_KEY = "secret_key"
+PROPERTY_ENGINE = "engine"
+PROPERTY_MODEL = "model"
+PROPERTY_PROMPT = "prompt"
+PROPERTY_MODE = "mode"
+PROPERTY_INPUT_LANGUAGE = "input_language"
+PROPERTY_OUTPUT_LANGUAGE = "output_language"
+PROPERTY_CHAT_TEMPLATE = "chat_template"
+PROPERTY_ENDPOINT_NAME = "endpoint_name"
+PROPERTY_TEMPERATURE = "temperature"
+PROPERTY_TOP_P = "top_p"
+PROPERTY_MAX_TOKENS = "max_tokens"
+PROPERTY_GREETING = "greeting"
+PROPERTY_MAX_MEMORY_LENGTH = "max_memory_length"
+
+# Data property constants
+DATA_OUT_TEXT_DATA_PROPERTY_TEXT = "text"
+DATA_OUT_TEXT_DATA_PROPERTY_TEXT_END_OF_SEGMENT = "end_of_segment"
+
+DATA_IN_TEXT_DATA_PROPERTY_LANGUAGE = 'language'
+DATA_IN_TEXT_DATA_PROPERTY_TEXT = "text"
+DATA_IN_TEXT_DATA_PROPERTY_TEXT_STABLE = "text_stable"
+DATA_IN_TEXT_DATA_PROPERTY_TEXT_NON_STABLE = "text_non_stable"
+DATA_IN_TEXT_DATA_PROPERTY_IS_FINAL = "is_final"
+
+
+# Command constants
+CMD_IN_FLUSH = "flush"
+CMD_OUT_FLUSH = "flush"
+
+DATA_IN_TYPES = {
+    DATA_IN_TEXT_DATA_PROPERTY_LANGUAGE: "string",
+    DATA_IN_TEXT_DATA_PROPERTY_TEXT: "string",
+    DATA_IN_TEXT_DATA_PROPERTY_TEXT_STABLE: "string",
+    DATA_IN_TEXT_DATA_PROPERTY_TEXT_NON_STABLE: "string",
+    DATA_IN_TEXT_DATA_PROPERTY_IS_FINAL: "bool",
+}
+
+PUNCUTATIONS = set(",，.。?？!！")

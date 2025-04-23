@@ -1,0 +1,72 @@
+{
+    "type": "extension",
+    "name": "sagemaker_tts_python",
+    "version": "0.1.0",
+    "language": "python",
+    "dependencies": [
+        {
+            "type": "system",
+            "name": "rte_runtime_python",
+            "version": "0.4.0"
+        }
+    ],
+    "api": {
+        "property": {
+            "region": {
+                "type": "string"
+            },
+            "access_key": {
+                "type": "string"
+            },
+            "secret_key": {
+                "type": "string"
+            },
+            "endpoint": {
+                "type": "string"
+            },
+            "sample_rate": {
+                "type": "string"
+            },
+            "prompt_audio": {
+                "type": "string"
+            },
+            "prompt_text": {
+                "type": "string"
+            },
+            "prompt_language": {
+                "type": "string"
+            },
+            "output_language": {
+                "type": "string"
+            },
+            "model_type": {
+                "type": "string"
+            }
+        },
+        "data_in": [
+            {
+                "name": "text_data",
+                "property": {
+                    "text": {
+                        "type": "string"
+                    }
+                }
+            }
+        ],
+        "cmd_in": [
+            {
+                "name": "flush"
+            }
+        ],
+        "cmd_out": [
+            {
+                "name": "flush"
+            }
+        ],
+        "pcm_frame_out": [
+            {
+                "name": "pcm_frame"
+            }
+        ]
+    }
+}
