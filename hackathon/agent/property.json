@@ -1,0 +1,231 @@
+{
+  "_ten": {
+    "predefined_graphs": [
+      {
+        "name": "transcribe_gemini_polly",
+        "auto_start": true,
+        "nodes": [
+          {
+            "type": "extension",
+            "name": "agora_rtc",
+            "addon": "agora_rtc",
+            "extension_group": "default",
+            "property": {
+              "app_id": "${env:AGORA_APP_ID}",
+              "token": "<agora_token>",
+              "channel": "ten_agent_test",
+              "stream_id": 1234,
+              "remote_stream_id": 123,
+              "subscribe_audio": true,
+              "publish_audio": true,
+              "publish_data": true,
+              "enable_agora_asr": false
+            }
+          },
+          {
+            "type": "extension",
+            "name": "stt",
+            "addon": "transcribe_asr_python",
+            "extension_group": "stt",
+            "property": {
+              "region": "us-east-1",
+              "access_key": "${env:AWS_ACCESS_KEY_ID}",
+              "secret_key": "${env:AWS_SECRET_ACCESS_KEY}",
+              "sample_rate": "16000",
+              "lang_code": "zh-TW"
+            }
+          },
+          {
+            "type": "extension",
+            "name": "llm",
+            "addon": "gemini_llm_python",
+            "extension_group": "llm",
+            "property": {
+              "api_key": "${env:GEMINI_API_KEY}",
+              "greeting": "TEN Agent connected. How can I help you today?",
+              "max_memory_length": 10,
+              "max_output_tokens": 512,
+              "model": "gemini-2.0-flash",
+              "prompt": "",
+              "temperature": 0.9,
+              "top_k": 40,
+              "top_p": 0.95
+            }
+          },
+          {
+            "type": "extension",
+            "name": "tts",
+            "addon": "polly_tts",
+            "extension_group": "tts",
+            "property": {
+              "region": "us-east-1",
+              "access_key": "${env:AWS_ACCESS_KEY_ID}",
+              "secret_key": "${env:AWS_SECRET_ACCESS_KEY}",
+              "engine": "standard",
+              "voice": "Zhiyu",
+              "sample_rate": 16000,
+              "lang_code": "cmn-CN"
+            }
+          },
+          {
+            "type": "extension",
+            "name": "interrupt_detector",
+            "addon": "interrupt_detector_python",
+            "extension_group": "default",
+            "property": {}
+          },
+          {
+            "type": "extension",
+            "name": "message_collector",
+            "addon": "message_collector",
+            "extension_group": "transcriber",
+            "property": {}
+          }
+        ],
+        "connections": [
+          {
+            "extension": "agora_rtc",
+            "cmd": [
+              {
+                "name": "on_user_joined",
+                "dest": [
+                  {
+                    "extension": "llm"
+                  }
+                ]
+              },
+              {
+                "name": "on_user_left",
+                "dest": [
+                  {
+                    "extension": "llm"
+                  }
+                ]
+              },
+              {
+                "name": "on_connection_failure",
+                "dest": [
+                  {
+                    "extension": "llm"
+                  }
+                ]
+              }
+            ],
+            "audio_frame": [
+              {
+                "name": "pcm_frame",
+                "dest": [
+                  {
+                    "extension": "stt"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "extension": "stt",
+            "data": [
+              {
+                "name": "text_data",
+                "dest": [
+                  {
+                    "extension": "interrupt_detector"
+                  },
+                  {
+                    "extension": "message_collector"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "extension": "llm",
+            "cmd": [
+              {
+                "name": "flush",
+                "dest": [
+                  {
+                    "extension": "tts"
+                  }
+                ]
+              }
+            ],
+            "data": [
+              {
+                "name": "text_data",
+                "dest": [
+                  {
+                    "extension": "tts"
+                  },
+                  {
+                    "extension": "message_collector"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "extension": "message_collector",
+            "data": [
+              {
+                "name": "data",
+                "dest": [
+                  {
+                    "extension": "agora_rtc"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "extension": "tts",
+            "cmd": [
+              {
+                "name": "flush",
+                "dest": [
+                  {
+                    "extension": "agora_rtc"
+                  }
+                ]
+              }
+            ],
+            "audio_frame": [
+              {
+                "name": "pcm_frame",
+                "dest": [
+                  {
+                    "extension": "agora_rtc"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "extension": "interrupt_detector",
+            "cmd": [
+              {
+                "name": "flush",
+                "dest": [
+                  {
+                    "extension": "llm"
+                  }
+                ]
+              }
+            ],
+            "data": [
+              {
+                "name": "text_data",
+                "dest": [
+                  {
+                    "extension": "llm"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "log_level": 3
+  }
+}

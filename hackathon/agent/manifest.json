@@ -1,0 +1,42 @@
+{
+  "type": "app",
+  "name": "agent_hackathon",
+  "version": "0.0.1",
+  "dependencies": [
+    {
+      "type": "system",
+      "name": "ten_runtime_go",
+      "version": "0.8"
+    },
+    {
+      "type": "extension",
+      "name": "agora_rtc",
+      "version": "=0.12.0"
+    },
+    {
+      "type": "extension",
+      "name": "transcribe_asr_python",
+      "version": "0.1.0"
+    },
+    {
+      "type": "extension",
+      "name": "gemini_llm_python",
+      "version": "0.1.0"
+    },
+    {
+      "type": "extension",
+      "name": "polly_tts",
+      "version": "0.1.0"
+    },
+    {
+      "type": "extension",
+      "name": "interrupt_detector_python",
+      "version": "0.1.0"
+    },
+    {
+      "type": "extension",
+      "name": "message_collector",
+      "version": "0.1.0"
+    }
+  ]
+}
