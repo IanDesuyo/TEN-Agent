@@ -2,7 +2,6 @@
     "type": "extension",
     "name": "sagemaker_tts_python",
     "version": "0.1.0",
-    "language": "python",
     "dependencies": [
         {
             "type": "system",
@@ -63,7 +62,7 @@
                 "name": "flush"
             }
         ],
-        "pcm_frame_out": [
+        "audio_frame_out": [
             {
                 "name": "pcm_frame"
             }
