@@ -37,6 +37,11 @@
       "type": "extension",
       "name": "message_collector",
       "version": "0.1.0"
+    },
+    {
+      "type": "extension",
+      "name": "dify_python",
+      "version": "0.1.0"
     }
   ]
 }
