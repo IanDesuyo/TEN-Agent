@@ -1,161 +1,89 @@
-from rte import (
-    Extension,
-    RteEnv,
-    Cmd,
-    PcmFrame,
-    PcmFrameDataFmt,
-    Data,
-    StatusCode,
-    CmdResult,
-    MetadataInfo,
-)
-
-import queue
-import threading
-from datetime import datetime
+#
+# This file is part of TEN Framework, an open source project.
+# Licensed under the Apache License, Version 2.0.
+# See the LICENSE file for more information.
+#
 import traceback
-from contextlib import closing
 
-from .log import logger
-from .sagemaker_wrapper import SageMakerTTSWrapper, SageMakerTTSConfig
+from ten import AsyncTenEnv, AudioFrame, AudioFrameDataFmt
+from ten_ai_base.tts import AsyncTTSBaseExtension
 
-PROPERTY_REGION = "region"  # Optional
-PROPERTY_ACCESS_KEY = "access_key"  # Optional
-PROPERTY_SECRET_KEY = "secret_key"  # Optional
-PROPERTY_ENDPOINT = 'endpoint'      # Required
-PROPERTY_SAMPLE_RATE = 'sample_rate'  # Optional
-PROPERTY_PROMPT_AUDIO = 'prompt_audio' # Optional
-PROPERTY_PROMPT_TEXT = 'prompt_text' # Optional
-PROPERTY_PROMPT_LANGUAGE = 'prompt_language'    # Optional
-PROPERTY_OUTPUT_LANGUAGE = 'output_language'    # Optional
-PROPERTY_MODEL_TYPE = 'model_type'    # Optional
+from .sagemaker_wrapper import SageMakerTTSConfig, SageMakerTTSWrapper
 
-class SageMakerTTSExtension(Extension):
+
+class SageMakerTTSExtension(AsyncTTSBaseExtension):
     def __init__(self, name: str):
         super().__init__(name)
-
-        self.outdateTs = datetime.now()
-        self.stopped = False
-        self.thread = None
-        self.queue = queue.Queue()
+        self.client = None
+        self.config: SageMakerTTSConfig = None
         self.frame_size = None
+        self.ten_env = None
 
-        self.bytes_per_sample = 2
-        self.number_of_channels = 1
+    async def on_init(self, ten_env: AsyncTenEnv) -> None:
+        await super().on_init(ten_env)
+        ten_env.log_debug("on_init")
+        self.ten_env = ten_env
 
-    def on_start(self, rte: RteEnv) -> None:
-        logger.info("SageMakerTTSExtension on_start")
+    async def on_start(self, ten_env: AsyncTenEnv) -> None:
+        await super().on_start(ten_env)
+        ten_env.log_debug("on_start")
 
-        sagemaker_tts_config = SageMakerTTSConfig.default_config()
+        self.config = await SageMakerTTSConfig.create_async(ten_env=ten_env)
 
-        for optional_param in [PROPERTY_REGION, PROPERTY_ACCESS_KEY, PROPERTY_SECRET_KEY,
-                               PROPERTY_ENDPOINT, PROPERTY_SAMPLE_RATE, PROPERTY_PROMPT_AUDIO, 
-                               PROPERTY_PROMPT_TEXT, PROPERTY_PROMPT_LANGUAGE, PROPERTY_OUTPUT_LANGUAGE,
-                               PROPERTY_MODEL_TYPE]:
-            try:
-                value = rte.get_property_string(optional_param).strip()
-                if value:
-                    sagemaker_tts_config.__setattr__(optional_param, value)
-            except Exception as err:
-                logger.info(f"GetProperty optional {optional_param} failed, err: {err}. Using default value: {sagemaker_tts_config.__getattribute__(optional_param)}")
+        self.frame_size = int(int(self.config.sample_rate) * 2 * 1 / 100)
+        print("!!!FRAMSIZE!!!", self.frame_size)
 
-        sagemaker_tts_config.validate()
+        if not self.config.access_key:
+            raise ValueError("api_key is required")
 
-        self.sagemaker_tts = SageMakerTTSWrapper(sagemaker_tts_config)
-        self.frame_size = int(int(sagemaker_tts_config.sample_rate) * self.number_of_channels * self.bytes_per_sample / 100)
+        self.client = SageMakerTTSWrapper(self.config)
 
-        self.thread = threading.Thread(target=self.async_sagemaker_tts_handler, args=[rte])
-        self.thread.start()
-        rte.on_start_done()
+    async def on_stop(self, ten_env: AsyncTenEnv) -> None:
+        await super().on_stop(ten_env)
+        ten_env.log_debug("on_stop")
 
-    def on_stop(self, rte: RteEnv) -> None:
-        logger.info("SageMakerTTSExtension on_stop")
+    async def on_deinit(self, ten_env: AsyncTenEnv) -> None:
+        await super().on_deinit(ten_env)
+        ten_env.log_debug("on_deinit")
 
-        self.stopped = True
-        self.queue.put(None)
-        self.flush()
-        self.thread.join()
-        rte.on_stop_done()
+    async def on_request_tts(
+        self, ten_env: AsyncTenEnv, input_text: str, end_of_segment: bool
+    ) -> None:
+        try:
+            audio_stream = self.client.synthesize(
+                text=input_text, language=self.client.config.output_language
+            )
+            for event in audio_stream:
+                chunk = event["PayloadPart"]["Bytes"]
+                if chunk:
+                    await self.send_audio_out(ten_env, chunk, sample_rate=32000)
+                else:
+                    ten_env.log_debug("Received empty chunk")
 
-    def need_interrupt(self, ts: datetime.time) -> bool:
-        return (self.outdateTs - ts).total_seconds() > 1
+        except Exception:
+            ten_env.log_error(f"on_request_tts failed: {traceback.format_exc()}")
 
-    def __get_frame(self, data: bytes) -> PcmFrame:
-        sample_rate = int(self.sagemaker_tts.config.sample_rate)
+    async def on_cancel_tts(self, ten_env: AsyncTenEnv) -> None:
+        return await super().on_cancel_tts(ten_env)
 
-        f = PcmFrame.create("pcm_frame")
+    def __get_frame(self, data: bytes) -> AudioFrame:
+        sample_rate = int(self.config.sample_rate)
+
+        f = AudioFrame.create("pcm_frame")
         f.set_sample_rate(sample_rate)
         f.set_bytes_per_sample(2)
         f.set_number_of_channels(1)
 
-        f.set_data_fmt(PcmFrameDataFmt.INTERLEAVE)
-        f.set_samples_per_channel(sample_rate // 100)
+        f.set_data_fmt(AudioFrameDataFmt.INTERLEAVE)
+        f.set_samples_per_channel(160)
+        self.ten_env.log_info(
+            f"set_samples_per_channel: {160}, frame_size: {self.frame_size}, data size: {len(data)}"
+        )
+        self.frame_size = len(data)
         f.alloc_buf(self.frame_size)
         buff = f.lock_buf()
         if len(data) < self.frame_size:
             buff[:] = bytes(self.frame_size)  # fill with 0
-        buff[:len(data)] = data
+        buff[: len(data)] = data
         f.unlock_buf(buff)
         return f
-
-    def async_sagemaker_tts_handler(self, rte: RteEnv):
-        while not self.stopped:
-            value = self.queue.get()
-            if value is None:
-                logger.warning("async_sagemaker_tts_handler: exit due to None value got.")
-                break
-
-            inputText, ts = value
-            if not inputText:
-                logger.warning("async_sagemaker_tts_handler: empty input detected.")
-                continue
-
-            try:
-                audio_stream = self.sagemaker_tts.synthesize(text=inputText, language=self.sagemaker_tts.config.output_language)
-                for event in audio_stream:
-                    if self.need_interrupt(ts):
-                        logger.debug("async_sagemaker_tts_handler: got interrupt cmd, stop sending pcm frame.")
-                        break
-                    chunk_bytes = event['PayloadPart']['Bytes']
-                    f = self.__get_frame(chunk_bytes)
-                    rte.send_pcm_frame(f)
-
-            except Exception as e:
-                logger.exception(e)
-                logger.exception(traceback.format_exc())
-
-    def flush(self):
-        logger.info("SageMakerTTSExtension flush")
-        while not self.queue.empty():
-            self.queue.get()
-        self.queue.put(("", datetime.now()))
-
-    def on_data(self, rte: RteEnv, data: Data) -> None:
-        logger.info("SageMakerTTSExtension on_data")
-        inputText = data.get_property_string("text")
-        if not inputText:
-            logger.info("ignore empty text")
-            return
-
-        is_end = data.get_property_bool("end_of_segment")
-
-        logger.info("on data %s %d", inputText, is_end)
-        self.queue.put((inputText, datetime.now()))
-
-    def on_cmd(self, rte: RteEnv, cmd: Cmd) -> None:
-        logger.info("SageMakerTTSExtension on_cmd")
-        cmd_json = cmd.to_json()
-        logger.info("SageMakerTTSExtension on_cmd json: %s", cmd_json)
-
-        cmdName = cmd.get_name()
-        if cmdName == "flush":
-            self.outdateTs = datetime.now()
-            self.flush()
-            cmd_out = Cmd.create("flush")
-            rte.send_cmd(cmd_out, lambda rte, result: print("SageMakerTTSExtension send_cmd done"))
-        else:
-            logger.info("unknown cmd %s", cmdName)
-
-        cmd_result = CmdResult.create(StatusCode.OK)
-        cmd_result.set_property_string("detail", "success")
-        rte.return_result(cmd_result, cmd)

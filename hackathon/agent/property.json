@@ -2,6 +2,229 @@
   "_ten": {
     "predefined_graphs": [
       {
+        "name": "transcribe_dify_gptsovits",
+        "auto_start": true,
+        "nodes": [
+          {
+            "type": "extension",
+            "name": "agora_rtc",
+            "addon": "agora_rtc",
+            "extension_group": "default",
+            "property": {
+              "app_id": "${env:AGORA_APP_ID}",
+              "token": "<agora_token>",
+              "channel": "ten_agent_test",
+              "stream_id": 1234,
+              "remote_stream_id": 123,
+              "subscribe_audio": true,
+              "publish_audio": true,
+              "publish_data": true,
+              "enable_agora_asr": false
+            }
+          },
+          {
+            "type": "extension",
+            "name": "stt",
+            "addon": "transcribe_asr_python",
+            "extension_group": "stt",
+            "property": {
+              "region": "us-west-2",
+              "access_key": "${env:AWS_ACCESS_KEY_ID}",
+              "secret_key": "${env:AWS_SECRET_ACCESS_KEY}",
+              "sample_rate": "16000",
+              "lang_code": "zh-TW"
+            }
+          },
+          {
+            "type": "extension",
+            "name": "llm",
+            "addon": "dify_python",
+            "extension_group": "llm",
+            "property": {
+              "user_id": "User",
+              "api_key": "app-eA5snpSPKUCUJ6qD5kx5zicV",
+              "base_url": "https://dify-service-api.0xian.dev/v1",
+              "greeting": "唯?",
+              "failure_info": "Sorry, I am unable to process your request at the moment. Please check your dify configuration."
+            }
+          },
+          {
+            "type": "extension",
+            "name": "tts",
+            "addon": "sagemaker_tts_python",
+            "extension_group": "tts",
+            "property": {
+              "region": "us-west-2",
+              "access_key": "${env:AWS_ACCESS_KEY_ID}",
+              "secret_key": "${env:AWS_SECRET_ACCESS_KEY}",
+              "endpoint": "gpt-sovits-sagemaker-endpoint2025-04-26-14-30-55",
+              "sample_rate": "16000",
+              "prompt_audio": "s3://sagemaker-studio-781694603091-csxn7jynx2e/ref_dayu_2s.wav",
+              "prompt_text": "第二次看完大鱼海棠",
+              "prompt_language": "zh",
+              "output_language": "zh",
+              "model_type": "gpt_sovits"
+            }
+          },
+          {
+            "type": "extension",
+            "name": "interrupt_detector",
+            "addon": "interrupt_detector_python",
+            "extension_group": "default",
+            "property": {}
+          },
+          {
+            "type": "extension",
+            "name": "message_collector",
+            "addon": "message_collector",
+            "extension_group": "transcriber",
+            "property": {}
+          }
+        ],
+        "connections": [
+          {
+            "extension": "agora_rtc",
+            "cmd": [
+              {
+                "name": "on_user_joined",
+                "dest": [
+                  {
+                    "extension": "llm"
+                  }
+                ]
+              },
+              {
+                "name": "on_user_left",
+                "dest": [
+                  {
+                    "extension": "llm"
+                  }
+                ]
+              },
+              {
+                "name": "on_connection_failure",
+                "dest": [
+                  {
+                    "extension": "llm"
+                  }
+                ]
+              }
+            ],
+            "audio_frame": [
+              {
+                "name": "pcm_frame",
+                "dest": [
+                  {
+                    "extension": "stt"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "extension": "stt",
+            "data": [
+              {
+                "name": "text_data",
+                "dest": [
+                  {
+                    "extension": "interrupt_detector"
+                  },
+                  {
+                    "extension": "message_collector"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "extension": "llm",
+            "cmd": [
+              {
+                "name": "flush",
+                "dest": [
+                  {
+                    "extension": "tts"
+                  }
+                ]
+              }
+            ],
+            "data": [
+              {
+                "name": "text_data",
+                "dest": [
+                  {
+                    "extension": "tts"
+                  },
+                  {
+                    "extension": "message_collector"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "extension": "message_collector",
+            "data": [
+              {
+                "name": "data",
+                "dest": [
+                  {
+                    "extension": "agora_rtc"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "extension": "tts",
+            "cmd": [
+              {
+                "name": "flush",
+                "dest": [
+                  {
+                    "extension": "agora_rtc"
+                  }
+                ]
+              }
+            ],
+            "audio_frame": [
+              {
+                "name": "pcm_frame",
+                "dest": [
+                  {
+                    "extension": "agora_rtc"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "extension": "interrupt_detector",
+            "cmd": [
+              {
+                "name": "flush",
+                "dest": [
+                  {
+                    "extension": "llm"
+                  }
+                ]
+              }
+            ],
+            "data": [
+              {
+                "name": "text_data",
+                "dest": [
+                  {
+                    "extension": "llm"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
         "name": "transcribe_dify_polly",
         "auto_start": true,
         "nodes": [
@@ -28,7 +251,7 @@
             "addon": "transcribe_asr_python",
             "extension_group": "stt",
             "property": {
-              "region": "us-east-1",
+              "region": "us-west-2",
               "access_key": "${env:AWS_ACCESS_KEY_ID}",
               "secret_key": "${env:AWS_SECRET_ACCESS_KEY}",
               "sample_rate": "16000",
@@ -54,7 +277,7 @@
             "addon": "polly_tts",
             "extension_group": "tts",
             "property": {
-              "region": "us-east-1",
+              "region": "us-west-2",
               "access_key": "${env:AWS_ACCESS_KEY_ID}",
               "secret_key": "${env:AWS_SECRET_ACCESS_KEY}",
               "engine": "neural",
@@ -248,7 +471,7 @@
             "addon": "transcribe_asr_python",
             "extension_group": "stt",
             "property": {
-              "region": "us-east-1",
+              "region": "us-west-2",
               "access_key": "${env:AWS_ACCESS_KEY_ID}",
               "secret_key": "${env:AWS_SECRET_ACCESS_KEY}",
               "sample_rate": "16000",
@@ -261,7 +484,7 @@
             "addon": "bedrock_llm_python",
             "extension_group": "llm",
             "property": {
-              "region": "us-east-1",
+              "region": "us-west-2",
               "access_key_id": "${env:AWS_ACCESS_KEY_ID}",
               "secret_access_key": "${env:AWS_SECRET_ACCESS_KEY}",
               "model": "amazon.nova-pro-v1:0",
@@ -282,7 +505,7 @@
             "addon": "polly_tts",
             "extension_group": "tts",
             "property": {
-              "region": "us-east-1",
+              "region": "us-west-2",
               "access_key": "${env:AWS_ACCESS_KEY_ID}",
               "secret_key": "${env:AWS_SECRET_ACCESS_KEY}",
               "engine": "neural",
@@ -476,7 +699,7 @@
             "addon": "transcribe_asr_python",
             "extension_group": "stt",
             "property": {
-              "region": "us-east-1",
+              "region": "us-west-2",
               "access_key": "${env:AWS_ACCESS_KEY_ID}",
               "secret_key": "${env:AWS_SECRET_ACCESS_KEY}",
               "sample_rate": "16000",
@@ -506,7 +729,7 @@
             "addon": "polly_tts",
             "extension_group": "tts",
             "property": {
-              "region": "us-east-1",
+              "region": "us-west-2",
               "access_key": "${env:AWS_ACCESS_KEY_ID}",
               "secret_key": "${env:AWS_SECRET_ACCESS_KEY}",
               "engine": "neural",
