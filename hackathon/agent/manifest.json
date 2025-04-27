@@ -52,6 +52,11 @@
       "type": "extension",
       "name": "sagemaker_tts_python",
       "version": "0.1.0"
+    },
+    {
+      "type": "extension",
+      "name": "message_summarizer",
+      "version": "0.1.0"
     }
   ]
 }

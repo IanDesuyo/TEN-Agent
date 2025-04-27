@@ -65,6 +65,15 @@ export default function Action(props: { className?: string }) {
       dispatch(setAgentConnected(false));
       toast.success("Agent disconnected");
       stopPing();
+
+      // Trigger Summery
+      fetch("https://htcdwpetkhc7hgiomqzofqosha0tuxuv.lambda-url.us-west-2.on.aws", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({channel_id: channel})
+      }).then(res=>console.log("Trigger Summery", res));
     } else {
       const selectedGraph = graphList.find(
         (graph) => graph.uuid === selectedGraphId

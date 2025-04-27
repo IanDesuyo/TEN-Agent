@@ -527,6 +527,13 @@
             "addon": "message_collector",
             "extension_group": "transcriber",
             "property": {}
+          },
+          {
+            "type": "extension",
+            "name": "message_summarizer",
+            "addon": "message_summarizer",
+            "extension_group": "transcriber",
+            "property": {}
           }
         ],
         "connections": [
@@ -538,6 +545,9 @@
                 "dest": [
                   {
                     "extension": "llm"
+                  },
+                  {
+                    "extension": "message_summarizer"
                   }
                 ]
               },
@@ -546,6 +556,9 @@
                 "dest": [
                   {
                     "extension": "llm"
+                  },
+                  {
+                    "extension": "message_summarizer"
                   }
                 ]
               },
@@ -580,6 +593,9 @@
                   },
                   {
                     "extension": "message_collector"
+                  },
+                  {
+                    "extension": "message_summarizer"
                   }
                 ]
               }
@@ -606,6 +622,9 @@
                   },
                   {
                     "extension": "message_collector"
+                  },
+                  {
+                    "extension": "message_summarizer"
                   }
                 ]
               }
@@ -665,6 +684,19 @@
                 "dest": [
                   {
                     "extension": "llm"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "extension": "message_summarizer",
+            "data": [
+              {
+                "name": "text_data",
+                "dest": [
+                  {
+                    "extension": "message_collector"
                   }
                 ]
               }
