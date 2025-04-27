@@ -123,7 +123,7 @@ export const apiCheckCompatibleMessages = async (payload: {
 }
 
 export const apiFetchGraphs = async (): Promise<Graph[]> => {
-  if (isEditModeOn) {
+  if (true) {
     let resp: any = await axios.post(`/api/dev/v1/graphs`, {})
     return resp.data.data.map((graph: any) => ({
       name: graph.name,

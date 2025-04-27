@@ -188,7 +188,7 @@ let initializeGraphData: any;
 // Fetch graph details
 let fetchGraphDetails: any;
 
-if (isEditModeOn) {
+if (true) {
   // only for development, below requests depend on dev-server
   initializeGraphData = createAsyncThunk(
     "global/initializeGraphData",

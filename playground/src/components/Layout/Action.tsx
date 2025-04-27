@@ -167,13 +167,9 @@ export default function Action(props: { className?: string }) {
           {/* -- Graph Select Part */}
           <div className="flex flex-wrap items-center justify-between w-full md:w-auto gap-2 mt-2 md:mt-0">
             <RemoteGraphSelect />
-            {isEditModeOn && (
-              <>
-                <TrulienceCfgSheet />
-                <RemoteModuleCfgSheet />
-                <RemotePropertyCfgSheet />
-              </>
-            )}
+            <TrulienceCfgSheet />
+            <RemoteModuleCfgSheet />
+            <RemotePropertyCfgSheet />
 
             {/* -- Action Button */}
             <div className="ml-auto flex items-center gap-2">
