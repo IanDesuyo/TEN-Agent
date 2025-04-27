@@ -131,7 +131,7 @@ export const isLLM = (extensionName: string) => {
   return extensionName === "llm" || extensionName === "v2v";
 }
 
-export const isEditModeOn = process.env.NEXT_PUBLIC_EDIT_GRAPH_MODE === "true";
+export const isEditModeOn = true;
 
 export const TRULIENCE_SETTINGS_KEY = "__trulience__";
 export const DEFAULT_TRULIENCE_OPTIONS: ITrulienceSettings = {
